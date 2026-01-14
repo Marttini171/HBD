@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 Celebration</title>
+    <title>Happy Birthday Minh Đạt</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -79,19 +79,7 @@
         #brightness-panel label { font-size: 0.9rem; font-weight: bold; color: #FFD700; display: block; margin-bottom: 10px; }
         input[type=range] { width: 100%; cursor: pointer; accent-color: #FFD700; }
 
-        #credit-text {
-            position: fixed;
-            bottom: 15px;
-            right: 20px;
-            color: rgba(255, 255, 255, 0.3);
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 10006;
-            pointer-events: none;
-            user-select: none;
-            font-family: 'Segoe UI', sans-serif;
-            text-shadow: 0 0 2px rgba(0,0,0,0.8);
-        }
+        /* ĐÃ XÓA #credit-text */
     </style>
 </head>
 <body>
@@ -109,7 +97,7 @@
         <input type="range" id="brightness-slider" min="10" max="200" value="100">
     </div>
 
-    <div id="credit-text">tiktok: binnanee</div>
+    <!-- ĐÃ XÓA DÒNG <div id="credit-text">tiktok: binnanee</div> -->
 
     <div id="camera-wrapper">
         <canvas id="camera-preview"></canvas>
@@ -158,7 +146,7 @@
         });
 
         let scene, camera, renderer, controls, particles;
-        let particleAttributes = { positions: null, targets: null, photoPositions: null, colors: null, newYearTargets: null };
+        let particleAttributes = { positions: null, targets: null, photoPositions: null, colors: null, birthdayTargets: null }; // ĐÃ ĐỔI TÊN
         const numberCache = {}; 
         let isInitialized = false;
         let currentMode = 'PHOTO'; 
@@ -388,7 +376,7 @@
             scene.add(particles); controls.reset(); camera.position.set(0,0,Math.max(w,h)*CONFIG.imageGap);
             isInitialized=true;
             generateAllNumbers(vIdx);
-            particleAttributes.newYearTargets = createNewYearPoints(vIdx);
+            particleAttributes.birthdayTargets = createBirthdayPoints(vIdx); // ĐÃ ĐỔI TÊN
         }
 
         function generateAllNumbers(total) {
@@ -398,10 +386,12 @@
                 numberCache[i]=scanCanvasToPoints(c,total,s,2.2,s,true);
             }
         }
-        function createNewYearPoints(total){
-            const w=850; const h=400; const c=document.createElement('canvas'); c.width=w; c.height=h;
+        function createBirthdayPoints(total){ // HÀM MỚI
+            const w=900; const h=400; const c=document.createElement('canvas'); c.width=w; c.height=h;
             const ctx=c.getContext('2d'); ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
-            ctx.font='bold 100px Arial'; ctx.fillText("2026",w/2,h/2-60); ctx.font='bold 55px Arial'; ctx.fillText("HAPPY NEW YEAR",w/2,h/2+60);
+            ctx.font='bold 55px Arial'; ctx.fillText("HAPPY BIRTHDAY",w/2,h/2-60); 
+            ctx.font='bold 60px Arial'; ctx.fillText("TRƯƠNG MINH ĐẠT",w/2,h/2+20);
+            ctx.font='bold 70px Arial'; ctx.fillText("21/01",w/2,h/2+100);
             return scanCanvasToPoints(c,total,w,1.5,h,true);
         }
         function scanCanvasToPoints(canvas,total,w,scale,h,thick){
@@ -466,9 +456,9 @@
                         } 
                     } 
                     else if (p.fingers === 0) { 
-                        if (currentMode !== 'NEWYEAR') { 
-                            currentMode = 'NEWYEAR'; 
-                            particleAttributes.targets = particleAttributes.newYearTargets; 
+                        if (currentMode !== 'BIRTHDAY') {  // ĐÃ ĐỔI TÊN
+                            currentMode = 'BIRTHDAY'; 
+                            particleAttributes.targets = particleAttributes.birthdayTargets; 
                         } 
                     }
                     else { 
