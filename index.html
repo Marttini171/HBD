@@ -2,8 +2,9 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Birthday Interactive Cake</title>
+<title>Birthday Cake Final</title>
 
+<!-- MediaPipe -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
@@ -12,13 +13,15 @@ body{margin:0;overflow:hidden;background:#020205}
 #camera-preview{
  position:fixed;bottom:20px;left:20px;
  width:180px;height:140px;
- border:2px solid gold;z-index:10;
+ border:2px solid gold;
  transform:scaleX(-1);
+ z-index:10;
 }
 </style>
 </head>
 
 <body>
+
 <canvas id="camera-preview" width="180" height="140"></canvas>
 <video id="input-video" autoplay playsinline style="display:none"></video>
 
@@ -33,7 +36,7 @@ body{margin:0;overflow:hidden;background:#020205}
 <script type="module">
 import * as THREE from 'three';
 
-/* ===== THREE SETUP ===== */
+/* ================= THREE ================= */
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x020205);
 
@@ -44,14 +47,17 @@ const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 document.body.appendChild(renderer.domElement);
 
-/* ===== CAKE GROUP ===== */
+window.addEventListener('resize',()=>{
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+});
+
+/* ================= CAKE GROUP ================= */
 const cakeGroup=new THREE.Group();
 scene.add(cakeGroup);
 
-/* ===== CAKE PARTICLES ===== */
-let cakeParticles, candleParticles, fireworks=[];
-let candleOn=true;
-
+/* ================= CAKE ================= */
 function createCake(){
  const pts=[], cols=[];
  const add=(x,y,z,c)=>{
@@ -59,10 +65,12 @@ function createCake(){
   cols.push(c.r,c.g,c.b);
  };
 
+ // tầng dưới
  for(let x=-200;x<200;x+=6)
   for(let y=-60;y<20;y+=6)
    add(x,y,(Math.random()-0.5)*50,new THREE.Color('#FFD27F'));
 
+ // tầng trên
  for(let x=-140;x<140;x+=6)
   for(let y=30;y<90;y+=6)
    add(x,y,(Math.random()-0.5)*40,new THREE.Color('#FFF0A0'));
@@ -71,68 +79,90 @@ function createCake(){
  geo.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
  geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
 
- cakeParticles=new THREE.Points(
+ const cake=new THREE.Points(
   geo,
   new THREE.PointsMaterial({size:3,vertexColors:true})
  );
- cakeGroup.add(cakeParticles);
+ cakeGroup.add(cake);
 }
+createCake();
+
+/* ================= CANDLE ================= */
+let flame, flameMat, candleOn=true;
 
 function createCandle(){
- const pts=[], cols=[];
+ // thân nến
+ const bodyPts=[], bodyCols=[];
  for(let y=100;y<190;y+=5){
-  pts.push(0,y,(Math.random()-0.5)*10);
-  cols.push(1,1,1);
+  bodyPts.push(0,y,(Math.random()-0.5)*10);
+  bodyCols.push(1,1,1);
  }
- const geo=new THREE.BufferGeometry();
- geo.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
- geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
- candleParticles=new THREE.Points(
-  geo,
-  new THREE.PointsMaterial({size:4,vertexColors:true})
+ const bodyGeo=new THREE.BufferGeometry();
+ bodyGeo.setAttribute('position',new THREE.Float32BufferAttribute(bodyPts,3));
+ bodyGeo.setAttribute('color',new THREE.Float32BufferAttribute(bodyCols,3));
+ cakeGroup.add(new THREE.Points(
+  bodyGeo,new THREE.PointsMaterial({size:4,vertexColors:true})
+ ));
+
+ // lửa
+ const flameGeo=new THREE.BufferGeometry();
+ flameGeo.setAttribute(
+  'position',
+  new THREE.Float32BufferAttribute([0,200,0],3)
  );
- cakeGroup.add(candleParticles);
+ flameMat=new THREE.PointsMaterial({
+  size:16,
+  color:0xffaa33,
+  transparent:true,
+  opacity:1
+ });
+ flame=new THREE.Points(flameGeo,flameMat);
+ cakeGroup.add(flame);
 }
+createCandle();
+
+/* ================= FIREWORK ================= */
+let fireworks=[];
 
 function explodeFirework(){
- const pts=[], cols=[];
+ const pts=[], cols=[], vel=[];
  for(let i=0;i<400;i++){
-  pts.push(0,160,0);
+  pts.push(0,200,0);
   const c=new THREE.Color().setHSL(Math.random(),1,0.6);
   cols.push(c.r,c.g,c.b);
+  vel.push(
+   (Math.random()-0.5)*18,
+   Math.random()*18,
+   (Math.random()-0.5)*18
+  );
  }
  const geo=new THREE.BufferGeometry();
  geo.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
  geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+
  const fw=new THREE.Points(
   geo,
-  new THREE.PointsMaterial({size:4,vertexColors:true,transparent:true})
+  new THREE.PointsMaterial({
+   size:4,
+   vertexColors:true,
+   transparent:true,
+   opacity:1
+  })
  );
- fw.vel=[];
- for(let i=0;i<pts.length;i+=3){
-  fw.vel.push(
-   (Math.random()-0.5)*20,
-   Math.random()*20,
-   (Math.random()-0.5)*20
-  );
- }
+ fw.vel=vel;
  fireworks.push(fw);
  scene.add(fw);
 }
 
-createCake();
-createCandle();
-
-/* ===== HAND TRACK ===== */
+/* ================= HAND TRACK ================= */
 const video=document.getElementById('input-video');
-const canvas=document.getElementById('camera-preview');
-const ctx=canvas.getContext('2d');
-
-let blowCounter=0;
+const camCanvas=document.getElementById('camera-preview');
+const camCtx=camCanvas.getContext('2d');
+let blowCount=0;
 
 function onResults(res){
- ctx.clearRect(0,0,180,140);
- ctx.drawImage(res.image,0,0,180,140);
+ camCtx.clearRect(0,0,180,140);
+ camCtx.drawImage(res.image,0,0,180,140);
 
  if(!res.multiHandLandmarks) return;
  const lm=res.multiHandLandmarks[0];
@@ -142,13 +172,12 @@ function onResults(res){
  tips.forEach((t,i)=>{ if(lm[t].y<lm[pips[i]].y) fingers++; });
 
  if(fingers===5 && candleOn){
-  blowCounter++;
-  if(blowCounter>12){
+  blowCount++;
+  if(blowCount>12){
    candleOn=false;
-   cakeGroup.remove(candleParticles);
    explodeFirework();
   }
- } else blowCounter=0;
+ } else blowCount=0;
 }
 
 const hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
@@ -161,30 +190,39 @@ const cam=new Camera(video,{
 });
 cam.start();
 
-/* ===== ANIMATE ===== */
+/* ================= LOOP ================= */
 function animate(){
  requestAnimationFrame(animate);
 
  cakeGroup.rotation.y+=0.002;
 
- if(candleOn && candleParticles){
-  candleParticles.position.y=160+Math.sin(Date.now()*0.01)*2;
+ if(candleOn){
+  flame.position.y=200+Math.sin(Date.now()*0.02)*3;
+ }else{
+  flameMat.opacity=Math.max(0,flameMat.opacity-0.05);
  }
 
- fireworks.forEach((fw,i)=>{
+ fireworks=fireworks.filter(fw=>{
   const p=fw.geometry.attributes.position.array;
-  for(let j=0;j<p.length;j+=3){
-   p[j]+=fw.vel[j/3*3];
-   p[j+1]+=fw.vel[j/3*3+1]-0.5;
-   p[j+2]+=fw.vel[j/3*3+2];
+  for(let i=0;i<p.length;i+=3){
+   const k=i/3;
+   p[i]+=fw.vel[k*3];
+   p[i+1]+=fw.vel[k*3+1]-0.6;
+   p[i+2]+=fw.vel[k*3+2];
   }
-  fw.material.opacity-=0.01;
   fw.geometry.attributes.position.needsUpdate=true;
+  fw.material.opacity-=0.015;
+  if(fw.material.opacity<=0){
+   scene.remove(fw);
+   return false;
+  }
+  return true;
  });
 
  renderer.render(scene,camera);
 }
 animate();
 </script>
+
 </body>
 </html>
